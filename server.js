@@ -1,0 +1,203 @@
+import express from "express";
+import mongoose from "mongoose";
+import MongoStore from "connect-mongo";
+import session from "express-session";
+// import { Telegram } from "telegraf";
+import dotenv from "dotenv";
+// import { Telegraf } from "telegraf";
+import passport from "passport";
+// import passportLocalMongoose from "passport-local-mongoose";
+// import GoogleStrategy from "passport-google-oauth20";
+// import findOrCreate from "mongoose-findorcreate";
+import cors from "cors";
+import axios from "axios";
+import isUserAuthenticated from "./auth.js";
+import telegram from "./contactBot.js";
+import { User } from "./userModel.js";
+import { Lib } from "./libModel.js";
+import "./passportAuth.js";
+import { response } from "express";
+const result = dotenv.config();
+
+if (result.error) {
+  throw result.error;
+}
+
+const app = express();
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+// mongoose.connect("mongodb://localhost:27017/animexDB");
+try {
+  await mongoose.connect("mongodb://localhost:27017/animexDB");
+} catch (error) {
+  console.log(error);
+}
+mongoose.connection.on("error", (err) => {
+  console.log(err);
+});
+
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
+app.use(express.json());
+
+// const sessionStore = new MongoStore(
+//   {
+//     mongoUrl: connection,
+//     collection: 'session'
+//   }
+// )
+
+app.use(
+  session({
+    secret: "Our little secret.",
+    resave: true,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: "mongodb://localhost:27017/animexDB",
+      autoRemove: "native", // Default
+    }),
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, //equals one day
+    },
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+// mongoose.connect("mongodb://localhost:27017/animexDB");
+
+// const userSchema = new mongoose.Schema({
+//   username: String,
+//   name: String,
+//   googleId: String,
+//   picture: String,
+//   email:String
+// },{ versionKey: false });
+
+// // userSchema.plugin(passportLocalMongoose);
+// userSchema.plugin(findOrCreate);
+
+// const User = new mongoose.model("User", userSchema);
+
+// passport.use(User.createStrategy());
+// passport.serializeUser(function (user, done) {
+//   done(null, user.id);
+// });
+// passport.deserializeUser(function (id, done) {
+//   User.findById(id, function (err, user) {
+//     done(err, user);
+//   });
+// });
+// passport.use(
+//   new GoogleStrategy(
+//     {
+//       clientID: process.env.CLIENT_ID,
+//       clientSecret: process.env.CLIENT_SECRET,
+//       callbackURL: "http://localhost:5000/auth/google/callback",
+//       // userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+//       // passReqToCallback:true
+//     },
+//      async function (accessToken, refreshToken, profile, cb) {
+//       // console.log(accessToken);
+//       // console.log(refreshToken);
+//       // console.log(profile.photos[0].value);
+//       await User.findOrCreate(
+//         { googleId: profile.id, username: profile.name.givenName ,picture:profile.photos[0].value ,email: profile.emails[0].value},
+//         function (err, user) {
+//           // console.log("from google:",user);
+//           return cb(err, user);
+//         }
+//       );
+//     }
+//   )
+// );
+
+/////////////////////telegram/////////////////////////////
+// const telegram = new Telegram(process.env.BOT_TOKEN, {
+//   agent: null,
+//   webhookReply: true,
+// });
+
+// const bot = new Telegraf(process.env.BOT_TOKEN);
+// bot.use((ctx) => {
+//   telegram.sendMessage(ctx.from.id, `Your Telegram id: ${ctx.from.id}`);
+// });
+// bot.startPolling();
+
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "http://localhost:3000/signup",
+  }),
+  function (req, res) {
+    // console.log("in callback url:",req.session);
+    // Successful authentication, redirect secrets.
+    res.redirect("http://localhost:3000");
+  }
+);
+
+app.get("/auth/user", isUserAuthenticated, function (req, res, next) {
+  // console.log(req.isAuthenticated());
+  // console.log("user is ", req.user);
+  User.findById(req.user, function (err, result) {
+    console.log("result:",result);
+    res.json(result);
+  });
+});
+
+app.get("/user/library", isUserAuthenticated, async function (req, res) {
+  const id = { googleId: req.user.googleId };
+  const doc = await Lib.findOne(id);
+  const filter = await doc.library.join();
+  // console.log(filter);
+  const animeLib = await axios.get(
+    "https://kitsu.io/api/edge/anime?filter%5Bid%5D=" + filter
+  );
+  res.json(animeLib.data);
+});
+
+app.post("/user/add", isUserAuthenticated, async function (req, res) {
+  console.log(req.body.id);
+  const filter = {
+    googleId: req.user.googleId,
+  };
+  const update = { $push: { library: req.body.id } };
+  const doc = await Lib.findOneAndUpdate(
+    filter,
+    update,
+    { new: true, upsert: true }
+  );
+  console.log("doc: ", doc);
+  res.send("oki");
+});
+
+app.post("/user/logout", isUserAuthenticated, function (req, res) {
+  // req.logOut();
+  req.session.destroy(function (err) {
+    if (err) console.log(err);
+  });
+  console.log("user: ", req.user);
+  res.send("okie");
+});
+
+app.post("/contact", function (req, res) {
+  telegram.sendMessage(
+    process.env.GHANSHYAM_ID,
+    `Name: ${req.body.name}\nEmail Address: ${req.body.email}\nMessage: ${req.body.message}`
+  );
+});
+
+app.listen(5000, function () {
+  console.log("server started on port 5000.");
+});
