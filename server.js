@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 import passport from "passport";
 // import passportLocalMongoose from "passport-local-mongoose";
 // import GoogleStrategy from "passport-google-oauth20";
-// import findOrCreate from "mongoose-findorcreate";
+import findOrCreate from "mongoose-findorcreate";
 import cors from "cors";
 import axios from "axios";
 import isUserAuthenticated from "./auth.js";
@@ -32,7 +32,7 @@ app.use(
 );
 // mongoose.connect("mongodb://localhost:27017/animexDB");
 try {
-  await mongoose.connect("mongodb://localhost:27017/animexDB");
+  await mongoose.connect(process.env.MONGO_URI);
 } catch (error) {
   console.log(error);
 }
@@ -60,7 +60,7 @@ app.use(
     resave: true,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: "mongodb://localhost:27017/animexDB",
+      mongoUrl: process.env.MONGO_URI,
       autoRemove: "native", // Default
     }),
     cookie: {
@@ -140,9 +140,22 @@ app.get(
   passport.authenticate("google", {
     failureRedirect: "http://localhost:3000/signup",
   }),
-  function (req, res) {
-    // console.log("in callback url:",req.session);
+  async function (req, res) {
+    // console.log("in callback url:",req.user);
+
+  const filter = {
+    googleId: req.user.googleId,
+  };
+  // const lib_t = req.body.lib_t;  
+  const update = { $set: {googleId:req.body.googleId} };
+  const doc = await Lib.findOneAndUpdate(
+    filter,
+    update,
+    { new: true, upsert: true }
+  );
+  // console.log(doc);
     // Successful authentication, redirect secrets.
+
     res.redirect("http://localhost:3000");
   }
 );
@@ -151,7 +164,7 @@ app.get("/auth/user", isUserAuthenticated, function (req, res, next) {
   // console.log(req.isAuthenticated());
   // console.log("user is ", req.user);
   User.findById(req.user, function (err, result) {
-    console.log("result:",result);
+    // console.log("result:",result);
     res.json(result);
   });
 });
@@ -159,8 +172,11 @@ app.get("/auth/user", isUserAuthenticated, function (req, res, next) {
 app.get("/user/library", isUserAuthenticated, async function (req, res) {
   const id = { googleId: req.user.googleId };
   const doc = await Lib.findOne(id);
-  const filter = await doc.library.join();
-  // console.log(filter);
+  if(doc.completed===null){
+    res.json({});
+    return;    
+  }
+  const filter = await doc.completed.join();
   const animeLib = await axios.get(
     "https://kitsu.io/api/edge/anime?filter%5Bid%5D=" + filter
   );
@@ -168,17 +184,18 @@ app.get("/user/library", isUserAuthenticated, async function (req, res) {
 });
 
 app.post("/user/add", isUserAuthenticated, async function (req, res) {
-  console.log(req.body.id);
+  // console.log(req.body.id);
   const filter = {
     googleId: req.user.googleId,
   };
-  const update = { $push: { library: req.body.id } };
+  const lib_t = req.body.lib_t;  
+  const update = { $push: { [lib_t]: req.body.id } };
   const doc = await Lib.findOneAndUpdate(
     filter,
     update,
     { new: true, upsert: true }
   );
-  console.log("doc: ", doc);
+  // console.log("doc: ", doc);
   res.send("oki");
 });
 
@@ -187,7 +204,7 @@ app.post("/user/logout", isUserAuthenticated, function (req, res) {
   req.session.destroy(function (err) {
     if (err) console.log(err);
   });
-  console.log("user: ", req.user);
+  // console.log("user: ", req.user);
   res.send("okie");
 });
 

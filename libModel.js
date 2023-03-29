@@ -3,7 +3,11 @@ import findOrCreate from "mongoose-findorcreate";
 const libSchema = new mongoose.Schema(
   {
     googleId: String,
-    library: Array
+    dropped: Array,
+    currentlyWatching: Array,
+    wantTo: Array,
+    completed: Array,
+    onHold: Array,
   },
   { versionKey: false }
 );
