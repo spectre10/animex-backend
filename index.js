@@ -267,6 +267,10 @@ app.post("/contact", function(req, res) {
     );
 });
 
-app.listen(process.env.PORT, function() {
+if(process.env.NODE_ENV==="production"){
+    app.use(express.static('client/build'))
+}
+
+app.listen(process.env.PORT || 8080, function() {
     console.log("server started on port 5000.");
 });
