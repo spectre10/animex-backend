@@ -20,30 +20,30 @@ import { response } from "express";
 const result = dotenv.config();
 
 if (result.error) {
-  throw result.error;
+    throw result.error;
 }
 
 const app = express();
 app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
+    cors({
+        origin: "http://localhost:3000",
+        credentials: true,
+    })
 );
 // mongoose.connect("mongodb://localhost:27017/animexDB");
 try {
-  await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI);
 } catch (error) {
-  console.log(error);
+    console.log(error);
 }
 mongoose.connection.on("error", (err) => {
-  console.log(err);
+    console.log(err);
 });
 
 app.use(
-  express.urlencoded({
-    extended: true,
-  })
+    express.urlencoded({
+        extended: true,
+    })
 );
 app.use(express.json());
 
@@ -55,18 +55,18 @@ app.use(express.json());
 // )
 
 app.use(
-  session({
-    secret: "Our little secret.",
-    resave: true,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI,
-      autoRemove: "native", // Default
-    }),
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, //equals one day
-    },
-  })
+    session({
+        secret: "Our little secret.",
+        resave: true,
+        saveUninitialized: false,
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGO_URI,
+            autoRemove: "native", // Default
+        }),
+        cookie: {
+            maxAge: 1000 * 60 * 60 * 24, //equals one day
+        },
+    })
 );
 app.use(passport.initialize());
 app.use(passport.session());
@@ -131,90 +131,142 @@ app.use(passport.session());
 // bot.startPolling();
 
 app.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+    "/auth/google",
+    passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
 app.get(
-  "/auth/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: "http://localhost:3000/signup",
-  }),
-  async function (req, res) {
-    // console.log("in callback url:",req.user);
+    "/auth/google/callback",
+    passport.authenticate("google", {
+        failureRedirect: "http://localhost:3000/signup",
+    }),
+    async function(req, res) {
+        // console.log("in callback url:",req.user);
 
-  const filter = {
-    googleId: req.user.googleId,
-  };
-  // const lib_t = req.body.lib_t;  
-  const update = { $set: {googleId:req.body.googleId} };
-  const doc = await Lib.findOneAndUpdate(
-    filter,
-    update,
-    { new: true, upsert: true }
-  );
-  // console.log(doc);
-    // Successful authentication, redirect secrets.
+        const filter = {
+            googleId: req.user.googleId,
+        };
+        // const lib_t = req.body.lib_t;  
+        const update = { $set: { googleId: req.body.googleId } };
+        const doc = await Lib.findOneAndUpdate(
+            filter,
+            update,
+            { new: true, upsert: true }
+        );
+        // console.log(doc);
+        // Successful authentication, redirect secrets.
 
-    res.redirect("http://localhost:3000");
-  }
+        res.redirect("http://localhost:3000");
+    }
 );
 
-app.get("/auth/user", isUserAuthenticated, function (req, res, next) {
-  // console.log(req.isAuthenticated());
-  // console.log("user is ", req.user);
-  User.findById(req.user, function (err, result) {
-    // console.log("result:",result);
-    res.json(result);
-  });
+app.get("/auth/user", isUserAuthenticated, function(req, res, next) {
+    // console.log(req.isAuthenticated());
+    // console.log("user is ", req.user);
+    User.findById(req.user, function(err, result) {
+        // console.log("result:",result);
+        res.json(result);
+    });
 });
 
-app.get("/user/library", isUserAuthenticated, async function (req, res) {
-  const id = { googleId: req.user.googleId };
-  const doc = await Lib.findOne(id);
-  if(doc.completed===null){
-    res.json({});
-    return;    
-  }
-  const filter = await doc.completed.join();
-  const animeLib = await axios.get(
-    "https://kitsu.io/api/edge/anime?filter%5Bid%5D=" + filter
-  );
-  res.json(animeLib.data);
+app.get("/user/library/:lib_id", isUserAuthenticated, async function(req, res) {
+    let lib = (req.params.lib_id)
+    const id = { googleId: req.user.googleId };
+    const doc = await Lib.findOne(id);
+    if (lib == 0) {
+        if (doc.currentlyWatching === null) {
+            res.json({});
+            return;
+        } else {
+            const filter = await doc.currentlyWatching.join();
+            const animeLib = await axios.get(
+                "https://kitsu.io/api/edge/anime?filter%5Bid%5D=" + filter
+            );
+            res.json(animeLib.data);
+        }
+    }
+    if (lib == 1) {
+        if (doc.completed === null) {
+            res.json({});
+            return;
+        } else {
+            const filter = await doc.completed.join();
+            const animeLib = await axios.get(
+                "https://kitsu.io/api/edge/anime?filter%5Bid%5D=" + filter
+            );
+            res.json(animeLib.data);
+        }
+    }
+    if (lib == 2) {
+        if (doc.wantTo === null) {
+            res.json({});
+            return;
+        } else {
+            const filter = await doc.wantTo.join();
+            const animeLib = await axios.get(
+                "https://kitsu.io/api/edge/anime?filter%5Bid%5D=" + filter
+            );
+            res.json(animeLib.data);
+        }
+    }
+    if (lib == 3) {
+        if (doc.onHold === null) {
+            res.json({});
+            return;
+        } else {
+            const filter = await doc.onHold.join();
+            const animeLib = await axios.get(
+                "https://kitsu.io/api/edge/anime?filter%5Bid%5D=" + filter
+            );
+            res.json(animeLib.data);
+        }
+    }
+    if (lib == 4) {
+        if (doc.dropped === null) {
+            res.json({});
+            return;
+        } else {
+            const filter = await doc.dropped.join();
+            const animeLib = await axios.get(
+                "https://kitsu.io/api/edge/anime?filter%5Bid%5D=" + filter
+            );
+            res.json(animeLib.data);
+        }
+    }
 });
 
-app.post("/user/add", isUserAuthenticated, async function (req, res) {
-  // console.log(req.body.id);
-  const filter = {
-    googleId: req.user.googleId,
-  };
-  const lib_t = req.body.lib_t;  
-  const update = { $push: { [lib_t]: req.body.id } };
-  const doc = await Lib.findOneAndUpdate(
-    filter,
-    update,
-    { new: true, upsert: true }
-  );
-  // console.log("doc: ", doc);
-  res.send("oki");
+app.post("/user/add", isUserAuthenticated, async function(req, res) {
+    // console.log(req.body.id);
+    const filter = {
+        googleId: req.user.googleId,
+    };
+    const lib_t = req.body.lib_t;
+    const update = { $push: { [lib_t]: req.body.id } };
+    const doc = await Lib.findOneAndUpdate(
+        filter,
+        update,
+        { new: true, upsert: true }
+    );
+    // console.log("doc: ", doc);
+    res.send("oki");
 });
 
-app.post("/user/logout", isUserAuthenticated, function (req, res) {
-  // req.logOut();
-  req.session.destroy(function (err) {
-    if (err) console.log(err);
-  });
-  // console.log("user: ", req.user);
-  res.send("okie");
+app.post("/user/logout", isUserAuthenticated, function(req, res) {
+    // req.logOut();
+    req.session.destroy(function(err) {
+        if (err) console.log(err);
+    });
+    // console.log("user: ", req.user);
+    res.send("okie");
 });
 
-app.post("/contact", function (req, res) {
-  telegram.sendMessage(
-    process.env.GHANSHYAM_ID,
-    `Name: ${req.body.name}\nEmail Address: ${req.body.email}\nMessage: ${req.body.message}`
-  );
+app.post("/contact", function(req, res) {
+    telegram.sendMessage(
+        process.env.GHANSHYAM_ID,
+        `Name: ${req.body.name}\nEmail Address: ${req.body.email}\nMessage: ${req.body.message}`
+    );
 });
 
-app.listen(5000, function () {
-  console.log("server started on port 5000.");
+app.listen(5000, function() {
+    console.log("server started on port 5000.");
 });
