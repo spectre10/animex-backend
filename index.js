@@ -160,15 +160,13 @@ app.get(
         // console.log(doc);
         // Successful authentication, redirect secrets.
 
-        res.redirect("http://localhost:5000");
+        res.redirect("/");
     }
 );
 
 app.get("/auth/user", isUserAuthenticated, function(req, res, next) {
     // console.log(req.isAuthenticated());
-    console.log("user is ", req.user);
     User.findById(req.user, function(err, result) {
-        console.log("result:",result);
         res.json(result);
     });
 });
