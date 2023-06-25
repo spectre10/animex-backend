@@ -6,7 +6,7 @@
     "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "build":"cd client && npm run build",
+        "build":"cd client && git clone https://github.com/spectre10/Animex.git && npm install && npm run build",
         "install-client":"cd client && npm install",
         "dev": "node index.js"
     },
