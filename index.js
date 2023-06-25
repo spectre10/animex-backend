@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 import passport from "passport";
 // import passportLocalMongoose from "passport-local-mongoose";
 // import GoogleStrategy from "passport-google-oauth20";
-import findOrCreate from "mongoose-findorcreate";
+// import findOrCreate from "mongoose-findorcreate";
 import cors from "cors";
 import axios from "axios";
 import isUserAuthenticated from "./auth.js";
@@ -16,20 +16,24 @@ import telegram from "./contactBot.js";
 import { User } from "./userModel.js";
 import { Lib } from "./libModel.js";
 import "./passportAuth.js";
-import { response } from "express";
+// import { response } from "express";
+import path from "path"
 const result = dotenv.config();
+
 
 if (result.error) {
     throw result.error;
 }
 
 const app = express();
-app.use(
-    cors({
-        origin: "http://localhost:3000",
-        credentials: true,
-    })
-);
+const __dirname = path.resolve();
+app.use(express.static(path.resolve(__dirname, "client/build")))
+// app.use(
+//     cors({
+//         origin: "http://localhost:5000",
+//         credentials: true,
+//     })
+// );
 // mongoose.connect("mongodb://localhost:27017/animexDB");
 try {
     await mongoose.connect(process.env.MONGO_URI);
@@ -138,7 +142,7 @@ app.get(
 app.get(
     "/auth/google/callback",
     passport.authenticate("google", {
-        failureRedirect: "http://localhost:3000/signup",
+        failureRedirect: "http://localhost:5000/signup",
     }),
     async function(req, res) {
         // console.log("in callback url:",req.user);
@@ -156,15 +160,15 @@ app.get(
         // console.log(doc);
         // Successful authentication, redirect secrets.
 
-        res.redirect("http://localhost:3000");
+        res.redirect("http://localhost:5000");
     }
 );
 
 app.get("/auth/user", isUserAuthenticated, function(req, res, next) {
     // console.log(req.isAuthenticated());
-    // console.log("user is ", req.user);
+    console.log("user is ", req.user);
     User.findById(req.user, function(err, result) {
-        // console.log("result:",result);
+        console.log("result:",result);
         res.json(result);
     });
 });
@@ -267,10 +271,14 @@ app.post("/contact", function(req, res) {
     );
 });
 
-if(process.env.NODE_ENV==="production"){
+app.get("/*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "client/build", "index.html"))
+})
+
+if (process.env.NODE_ENV === "production") {
     app.use(express.static('client/build'))
 }
 
-app.listen(process.env.PORT || 8080, function() {
+app.listen(process.env.PORT || 5000, function() {
     console.log("server started on port 5000.");
 });
