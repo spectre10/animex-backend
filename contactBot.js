@@ -5,10 +5,6 @@ const result = dotenv.config();
 if (result.error) {
   throw result.error;
 }
-const telegram = new Telegram(process.env.BOT_TOKEN, {
-  agent: null,
-  webhookReply: true,
-});
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 bot.use((ctx) => {
