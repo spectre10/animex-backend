@@ -12,7 +12,7 @@ import passport from "passport";
 import cors from "cors";
 import axios from "axios";
 import isUserAuthenticated from "./auth.js";
-import telegram from "./contactBot.js";
+import bot from "./contactBot.js";
 import { User } from "./userModel.js";
 import { Lib } from "./libModel.js";
 import "./passportAuth.js";
@@ -263,10 +263,11 @@ app.post("/user/logout", isUserAuthenticated, function(req, res) {
 });
 
 app.post("/contact", function(req, res) {
-    telegram.sendMessage(
+    bot.telegram.sendMessage(
         process.env.GHANSHYAM_ID,
         `Name: ${req.body.name}\nEmail Address: ${req.body.email}\nMessage: ${req.body.message}`
     );
+    bot.stop()
 });
 
 app.get("/*", (req, res) => {
