@@ -60,7 +60,7 @@ app.use(express.json());
 
 app.use(
     session({
-        secret: "Our little secret.",
+        secret: process.env.MONGO_SECRET,
         resave: true,
         saveUninitialized: false,
         store: MongoStore.create({
