@@ -27,7 +27,7 @@ if (result.error) {
 
 const app = express();
 const __dirname = path.resolve();
-app.use(express.static(path.resolve(__dirname, "client/build")))
+app.use(express.static(path.resolve(__dirname, "client/Animex/build")))
 // app.use(
 //     cors({
 //         origin: "http://localhost:5000",
@@ -270,7 +270,7 @@ app.post("/contact", function(req, res) {
 });
 
 app.get("/*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "client/build", "index.html"))
+    res.sendFile(path.resolve(__dirname, "client/Animex/build", "index.html"))
 })
 
 if (process.env.NODE_ENV === "production") {
