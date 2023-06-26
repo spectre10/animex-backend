@@ -2,9 +2,9 @@ import { Telegraf, Telegram } from "telegraf";
 import dotenv from "dotenv";
 const result = dotenv.config();
 
-if (result.error) {
-  throw result.error;
-}
+// if (result.error) {
+//   throw result.error;
+// }
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 bot.use((ctx) => {

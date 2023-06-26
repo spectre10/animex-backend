@@ -4,9 +4,9 @@ import { User } from "./userModel.js";
 import dotenv from "dotenv";
 const result = dotenv.config();
 
-if (result.error) {
-  throw result.error;
-}
+// if (result.error) {
+//   throw result.error;
+// }
 passport.serializeUser(function (user, done) {
   done(null, user.id);
 });
