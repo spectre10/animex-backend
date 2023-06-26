@@ -8,7 +8,7 @@ if (result.error) {
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 bot.use((ctx) => {
-  telegram.sendMessage(ctx.from.id, `Your Telegram id: ${ctx.from.id}`);
+  bot.telegram.sendMessage(ctx.from.id, `Your Telegram id: ${ctx.from.id}`);
 });
 bot.launch();
 
