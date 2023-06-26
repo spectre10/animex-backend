@@ -23,7 +23,7 @@ passport.use(
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
       // callbackURL: "https://animex-a8i5.onrender.com/auth/google/callback",
-      callbackURL: "https://animex-be.onrender.com:10000/auth/google/callback"
+      callbackURL: "https://animex-be.onrender.com/auth/google/callback"
       // userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
       // passReqToCallback:true
     },
