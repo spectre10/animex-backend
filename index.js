@@ -21,9 +21,9 @@ import path from "path"
 const result = dotenv.config();
 
 
-if (result.error) {
-    throw result.error;
-}
+// if (result.error) {
+//     throw result.error;
+// }
 
 const app = express();
 const __dirname = path.resolve();
