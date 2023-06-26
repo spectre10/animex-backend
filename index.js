@@ -17,7 +17,6 @@ import { User } from "./userModel.js";
 import { Lib } from "./libModel.js";
 import "./passportAuth.js";
 // import { response } from "express";
-import path from "path"
 const result = dotenv.config();
 
 
@@ -26,8 +25,6 @@ const result = dotenv.config();
 // }
 
 const app = express();
-const __dirname = path.resolve();
-app.use(express.static(path.resolve(__dirname, "client/Animex/build")))
 // app.use(
 //     cors({
 //         origin: "http://localhost:5000",
@@ -269,10 +266,6 @@ app.post("/contact", function(req, res) {
     );
     bot.stop()
 });
-
-app.get("/*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "client/Animex/build", "index.html"))
-})
 
 if (process.env.NODE_ENV === "production") {
     app.use(express.static('client/build'))
