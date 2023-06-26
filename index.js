@@ -278,6 +278,7 @@ if (process.env.NODE_ENV === "production") {
     app.use(express.static('client/Animex/build'))
 }
 
-app.listen(process.env.PORT || 5000, function() {
-    console.log("server started on port 5000.");
+let PORT = process.env.PORT || 5000
+app.listen(PORT, function() {
+    console.log("server started on port ", PORT);
 });
