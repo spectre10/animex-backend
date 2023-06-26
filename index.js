@@ -36,7 +36,6 @@ app.use(express.static(path.resolve(__dirname, "client/Animex/build")))
 // );
 // mongoose.connect("mongodb://localhost:27017/animexDB");
 try {
-    console.log(process.env.MONGO_URI,"mongo uri")
     await mongoose.connect(process.env.MONGO_URI);
 } catch (error) {
     console.log(error);
